@@ -322,11 +322,154 @@ jobs:
     resource_class: large
     steps:
       - run-build
+  
+  debug:
+    machine:
+      image: ubuntu-1604:201903-01
+    environment:
+      MIN_PHP: 7.1.3
+      SYMFONY_PROCESS_PHP_TEST_BINARY: ~/.phpenv/shims/php
+      MESSENGER_AMQP_DSN: 'amqp://localhost/%2f/messages'
+      MESSENGER_REDIS_DSN: 'redis://127.0.0.1:7001/messages'
+      SYMFONY_PHPUNIT_DISABLE_RESULT_CACHE: 1
+    steps:
+      - checkout
+      - run:
+          name: Install Dependencies
+          command: |
+            sudo apt update
+            sudo apt install -y parallel language-pack-fr-base ldap-utils slapd zookeeperd libzookeeper-mt-dev rabbitmq-server
+      - run:
+          name: Script
+          command: |
+            # Enable Sury ppa
+            sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 6B05F25D762E3157
+            sudo add-apt-repository -y ppa:ondrej/php
+            sudo rm /etc/apt/sources.list.d/google-chrome.list
+            sudo rm /etc/apt/sources.list.d/mongodb-3.4.list
+            sudo apt update
+            sudo apt install -y librabbitmq-dev libsodium-dev
+
+            # Start Redis cluster
+            docker pull grokzen/redis-cluster:5.0.4
+            docker run -d -p 7000:7000 -p 7001:7001 -p 7002:7002 -p 7003:7003 -p 7004:7004 -p 7005:7005 --name redis-cluster grokzen/redis-cluster:5.0.4
+            export REDIS_CLUSTER_HOSTS='localhost:7000 localhost:7001 localhost:7002 localhost:7003 localhost:7004 localhost:7005'
+
+            # General configuration
+            set -e
+            stty cols 120
+            mkdir /tmp/slapd
+            if [ ! -e /tmp/slapd-modules ]; then
+                [ -d /usr/lib/openldap ] && ln -s /usr/lib/openldap /tmp/slapd-modules || ln -s /usr/lib/ldap /tmp/slapd-modules
+            fi
+            slapd -f src/Symfony/Component/Ldap/Tests/Fixtures/conf/slapd.conf -h ldap://localhost:3389 &
+            [ -d ~/.composer ] || mkdir ~/.composer
+            cp .composer/* ~/.composer/
+            export PHPUNIT=$(readlink -f ./phpunit)
+            export PHPUNIT_X="$PHPUNIT --exclude-group tty,benchmark,intl-data"
+            export COMPOSER_UP='composer update --no-progress --no-suggest --ansi'
+            export COMPONENTS=$(find src/Symfony -mindepth 2 -type f -name phpunit.xml.dist -printf '%h\n')
+            find ~/.phpenv -name xdebug.ini -delete
+            nanoseconds () {
+                local cmd="date"
+                local format="+%s%N"
+                local os=$(uname)
+                if hash gdate > /dev/null 2>&1; then
+                  cmd="gdate"
+                elif [[ "$os" = Darwin ]]; then
+                  format="+%s000000000"
+                fi
+                $cmd -u $format
+            }
+            export -f nanoseconds
+            # tfold is a helper to create folded reports
+            tfold () {
+                local title="🐘 $PHP $1"
+                local fold=$(echo $title | sed -r 's/[^-_A-Za-z0-9]+/./g')
+                shift
+                local id=$(printf %08x $(( RANDOM * RANDOM )))
+                local start=$(nanoseconds)
+                echo -e "travis_fold:start:$fold"
+                echo -e "travis_time:start:$id"
+                echo -e "\\e[1;34m$title\\e[0m"
+                bash -xc "$*" 2>&1
+                local ok=$?
+                local end=$(nanoseconds)
+                echo -e "\\ntravis_time:end:$id:start=$start,finish=$end,duration=$(($end-$start))"
+                (exit $ok) &&
+                    echo -e "\\e[32mOK\\e[0m $title\\n\\ntravis_fold:end:$fold" ||
+                    echo -e "\\e[41mKO\\e[0m $title\\n"
+                (exit $ok)
+            }
+            export -f tfold
+            # tpecl is a helper to compile and cache php extensions
+            tpecl () {
+                local ext_name=$1
+                local ext_so=$2
+                local INI=$3
+                local input=${4:-yes}
+                local ext_dir=$(php -r "echo ini_get('extension_dir');")
+                local ext_cache=~/php-ext/$(basename $ext_dir)/$ext_name
+                if [[ -e $ext_cache/$ext_so ]]; then
+                    echo extension = $ext_cache/$ext_so >> $INI
+                else
+                    rm ~/.pearrc /tmp/pear 2>/dev/null || true
+                    mkdir -p $ext_cache
+                    echo $input | pecl install -f $ext_name &&
+                    cp $ext_dir/$ext_so $ext_cache
+                fi
+            }
+            export -f tpecl
+
+            # Install sigchild-enabled PHP to test the Process component on the lowest PHP matrix line
+            if [[ ! $deps && $TRAVIS_PHP_VERSION = ${MIN_PHP%.*} && ! -d php-$MIN_PHP/sapi ]]; then
+                wget http://php.net/get/php-$MIN_PHP.tar.bz2/from/this/mirror -O - | tar -xj &&
+                (cd php-$MIN_PHP && ./configure --enable-sigchild --enable-pcntl && make -j2)
+            fi
+
+            # php.ini configuration
+            for PHP in $TRAVIS_PHP_VERSION $php_extra; do
+                phpenv global $PHP 2>/dev/null || (cd / && wget https://s3.amazonaws.com/travis-php-archives/binaries/ubuntu/14.04/x86_64/php-$PHP.tar.bz2 -O - | tar -xj)
+                INI=~/.phpenv/versions/$PHP/etc/conf.d/travis.ini
+                echo date.timezone = Europe/Paris >> $INI
+                echo memory_limit = -1 >> $INI
+                echo session.gc_probability = 0 >> $INI
+                echo opcache.enable_cli = 1 >> $INI
+                echo apc.enable_cli = 1 >> $INI
+                echo extension = memcached.so >> $INI
+            done
+
+            # Install extra PHP extensions
+            for PHP in $TRAVIS_PHP_VERSION $php_extra; do
+                export PHP=$PHP
+                phpenv global $PHP
+                INI=~/.phpenv/versions/$PHP/etc/conf.d/travis.ini
+                if ! php --ri sodium > /dev/null; then
+                    tfold ext.libsodium tpecl libsodium sodium.so $INI
+                fi
+                tfold ext.apcu tpecl apcu-5.1.17 apcu.so $INI
+                tfold ext.mongodb tpecl mongodb-1.6.0alpha1 mongodb.so $INI
+                tfold ext.igbinary tpecl igbinary-2.0.8 igbinary.so $INI
+                tfold ext.zookeeper tpecl zookeeper-0.7.1 zookeeper.so $INI
+                tfold ext.amqp tpecl amqp-1.9.4 amqp.so $INI
+                tfold ext.redis tpecl redis-4.3.0 redis.so $INI "no"
+            done
+
+            # List all php extensions with versions
+            php -r 'foreach (get_loaded_extensions() as $extension) echo $extension . " " . phpversion($extension) . PHP_EOL;'
+
+
+            # Load fixtures
+            if [[ ! $skip ]]; then
+                ldapadd -h localhost:3389 -D cn=admin,dc=symfony,dc=com -w symfony -f src/Symfony/Component/Ldap/Tests/Fixtures/data/base.ldif &&
+                ldapadd -h localhost:3389 -D cn=admin,dc=symfony,dc=com -w symfony -f src/Symfony/Component/Ldap/Tests/Fixtures/data/fixtures.ldif
+            fi
       
 workflows:
   version: 2
   build:
     jobs:
-      - php_7_1
+      - debug
+#       - php_7_1
 #       - php_7_2
 #       - php_7_3
