@@ -324,7 +324,7 @@ jobs:
       - run-build
   
   debug:
-    working_directory: symfony
+    working_directory: ~/symfony
     machine:
       image: ubuntu-1604:201903-01
     environment:
