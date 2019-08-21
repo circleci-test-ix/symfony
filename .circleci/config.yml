@@ -362,13 +362,13 @@ jobs:
             phpenv install --list
 
             # Install php70
-            phpenv install 7.0.27
+            #phpenv install 7.0.27
 
             # Install php71
-            phpenv install 7.1.13
+            phpenv install 7.1.30
 
             # Install php72
-            phpenv install 7.2.1
+            #phpenv install 7.2.1
 
             for PHP_PATH in $HOME/.phpenv/versions/[0-9].[0-9].[0-9]*; do
               PHP_VERSION=${PHP_PATH##*/};
