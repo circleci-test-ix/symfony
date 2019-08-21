@@ -351,6 +351,12 @@ jobs:
 
             # Installer for phpenv.
             curl -L http://git.io/phpenv-installer | bash
+            
+            export PHPENV_ROOT="/home/circleci/.phpenv"
+            if [ -d "${PHPENV_ROOT}" ]; then
+              export PATH="${PHPENV_ROOT}/bin:${PATH}"
+              eval "$(phpenv init -)"
+            fi
 
             # List available PHP builds to install.
             phpenv install --list
