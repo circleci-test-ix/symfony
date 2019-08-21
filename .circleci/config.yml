@@ -345,8 +345,12 @@ jobs:
             # Enable Sury ppa
             sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 6B05F25D762E3157
             sudo add-apt-repository -y ppa:ondrej/php
-            sudo rm /etc/apt/sources.list.d/google-chrome.list
-            sudo rm /etc/apt/sources.list.d/mongodb-3.4.list
+            
+            # CCI disable
+            #sudo rm /etc/apt/sources.list.d/google-chrome.list
+            #sudo rm /etc/apt/sources.list.d/mongodb-3.4.list
+            # CCI disable
+            
             sudo apt update
             sudo apt install -y librabbitmq-dev libsodium-dev
 
