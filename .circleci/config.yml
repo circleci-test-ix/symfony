@@ -359,7 +359,7 @@ jobs:
 
             # Installer for phpenv.
             #curl -L http://git.io/phpenv-installer | sudo bash
-            curl -L https://raw.githubusercontent.com/phpenv/phpenv-installer/master/bin/phpenv-installer | bash            
+            curl -L https://raw.githubusercontent.com/phpenv/phpenv-installer/master/bin/phpenv-installer | sudo bash            
             
             export PHPENV_ROOT="/home/circleci/.phpenv"
             if [ -d "${PHPENV_ROOT}" ]; then
