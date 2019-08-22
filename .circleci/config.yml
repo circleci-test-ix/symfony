@@ -347,7 +347,9 @@ jobs:
             # Build dependencies.
             sudo apt-get install -y build-essential git-core curl wget cmake
             sudo apt-get -y build-dep php-cli
-            sudo apt-get install -y libcurl4-openssl-dev libmcrypt-dev libreadline-dev libxslt1-dev libxml2-dev libtidy-dev
+            sudo apt-get install -y libcurl4-openssl-dev libmcrypt-dev libreadline-dev libxslt1-dev libxml2-dev libtidy-dev bison re2c libbz2-dev libssl-dev libcurl4-gnutls-dev pkg-config libjpeg-dev
+            sudo apt-get instally -y libpng-dev libmcrypt-dev libreadline-dev libxslt-dev libzip-dev autoconf libc-client-dev libkrb5-dev
+            sudo apt-get instally -y libgmp-dev libmagickwand-dev libmagickcore-dev linux-libc-dev libyaml-dev libmemcached-dev libxpm-dev libwebp-dev
             
             # Install PHP
             sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 6B05F25D762E3157
