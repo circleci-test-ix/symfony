@@ -358,8 +358,8 @@ jobs:
             #sudo apt-get install php7.2
 
             # Installer for phpenv.
-            #curl -L http://git.io/phpenv-installer | sudo bash
-            curl -L https://raw.githubusercontent.com/phpenv/phpenv-installer/master/bin/phpenv-installer | sudo bash            
+            #curl -L http://git.io/phpenv-installer | bash
+            curl -L https://raw.githubusercontent.com/phpenv/phpenv-installer/master/bin/phpenv-installer | bash            
             
             export PHPENV_ROOT="/home/circleci/.phpenv"
             if [ -d "${PHPENV_ROOT}" ]; then
@@ -377,17 +377,18 @@ jobs:
             #phpenv install 7.1.30
 
             # Install php72
-            sudo phpenv install 7.2.21
+            #phpenv install 7.2.21
 
-            for PHP_PATH in $HOME/.phpenv/versions/[0-9].[0-9].[0-9]*; do
-              PHP_VERSION=${PHP_PATH##*/};
-              unlink "${HOME}/.phpenv/versions/${PHP_VERSION%.*}" 2>/dev/null
-              ln -s "${PHP_PATH}" "${HOME}/.phpenv/versions/${PHP_VERSION%.*}" 2>/dev/null
-            done
+            #for PHP_PATH in $HOME/.phpenv/versions/[0-9].[0-9].[0-9]*; do
+            #  PHP_VERSION=${PHP_PATH##*/};
+            #  unlink "${HOME}/.phpenv/versions/${PHP_VERSION%.*}" 2>/dev/null
+            #  ln -s "${PHP_PATH}" "${HOME}/.phpenv/versions/${PHP_VERSION%.*}" 2>/dev/null
+            #done
 
             phpenv rehash
           
-          
+            phpenv install 7.2.21
+            
             # Enable Sury ppa
             #sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 6B05F25D762E3157
             #sudo add-apt-repository -y ppa:ondrej/php
