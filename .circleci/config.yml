@@ -347,13 +347,13 @@ jobs:
             # Build dependencies.
             sudo apt-get install -y build-essential git-core curl wget cmake
             sudo apt-get -y build-dep php-cli
-            sudo apt-get install -y libcurl4-openssl-dev libmcrypt-dev libreadline-dev libxslt1-dev libxml2-dev libtidy-dev bison re2c libbz2-dev libssl-dev pkg-config libjpeg-dev
-            sudo apt-get install -y libpng-dev libmcrypt-dev libreadline-dev libxslt-dev libzip-dev autoconf libc-client-dev libkrb5-dev
-            sudo apt-get install -y libgmp-dev libmagickwand-dev libmagickcore-dev linux-libc-dev libyaml-dev libmemcached-dev libxpm-dev libwebp-dev
+            sudo apt-get install -y libcurl4-openssl-dev libmcrypt-dev libreadline-dev libxslt1-dev libxml2-dev libtidy-dev re2c
+            #sudo apt-get install -y bison re2c libbz2-dev libssl-dev pkg-config libjpeg-dev libpng-dev libmcrypt-dev libreadline-dev libxslt-dev libzip-dev autoconf libc-client-dev libkrb5-dev
+            #sudo apt-get install -y libgmp-dev libmagickwand-dev libmagickcore-dev linux-libc-dev libyaml-dev libmemcached-dev libxpm-dev libwebp-dev
             
             # Install PHP
-            sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 6B05F25D762E3157
-            sudo add-apt-repository -y ppa:ondrej/php
+            #sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 6B05F25D762E3157
+            #sudo add-apt-repository -y ppa:ondrej/php
             #sudo apt-get update
             #sudo apt-get install php7.2
 
@@ -381,19 +381,19 @@ jobs:
             
             PHP_BUILD_ZTS_ENABLE=yes PHP_BUILD_CONFIGURE_OPTS="--enable-debug" phpenv install 7.2.21
 
-            #for PHP_PATH in $HOME/.phpenv/versions/[0-9].[0-9].[0-9]*; do
-            #  PHP_VERSION=${PHP_PATH##*/};
-            #  unlink "${HOME}/.phpenv/versions/${PHP_VERSION%.*}" 2>/dev/null
-            #  ln -s "${PHP_PATH}" "${HOME}/.phpenv/versions/${PHP_VERSION%.*}" 2>/dev/null
-            #done
+            for PHP_PATH in $HOME/.phpenv/versions/[0-9].[0-9].[0-9]*; do
+              PHP_VERSION=${PHP_PATH##*/};
+              unlink "${HOME}/.phpenv/versions/${PHP_VERSION%.*}" 2>/dev/null
+              ln -s "${PHP_PATH}" "${HOME}/.phpenv/versions/${PHP_VERSION%.*}" 2>/dev/null
+            done
 
             phpenv rehash
           
             
             
             # Enable Sury ppa
-            #sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 6B05F25D762E3157
-            #sudo add-apt-repository -y ppa:ondrej/php
+            sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 6B05F25D762E3157
+            sudo add-apt-repository -y ppa:ondrej/php
             
             # CCI disable
             #sudo rm /etc/apt/sources.list.d/google-chrome.list
@@ -473,16 +473,21 @@ jobs:
                 fi
             }
             export -f tpecl
+            
+            echo "*** A"
 
             # Install sigchild-enabled PHP to test the Process component on the lowest PHP matrix line
             if [[ ! $deps && $TRAVIS_PHP_VERSION = ${MIN_PHP%.*} && ! -d php-$MIN_PHP/sapi ]]; then
+                echo "*** B"
                 wget http://php.net/get/php-$MIN_PHP.tar.bz2/from/this/mirror -O - | tar -xj &&
                 (cd php-$MIN_PHP && ./configure --enable-sigchild --enable-pcntl && make -j2)
             fi
 
             # php.ini configuration
             for PHP in $TRAVIS_PHP_VERSION $php_extra; do
+                echo "*** C"
                 phpenv global $PHP 2>/dev/null || (cd / && wget https://s3.amazonaws.com/travis-php-archives/binaries/ubuntu/14.04/x86_64/php-$PHP.tar.bz2 -O - | tar -xj)
+                echo "*** D"
                 INI=~/.phpenv/versions/$PHP/etc/conf.d/travis.ini
                 echo date.timezone = Europe/Paris >> $INI
                 echo memory_limit = -1 >> $INI
