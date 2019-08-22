@@ -381,7 +381,7 @@ jobs:
             
             export PHP_VERSION=7.2.21
             
-            PHP_BUILD_ZTS_ENABLE=yes PHP_BUILD_CONFIGURE_OPTS="--enable-debug" phpenv install 7.2.21
+            PHP_BUILD_ZTS_ENABLE=yes PHP_BUILD_CONFIGURE_OPTS="--enable-debug --with-ldap --with-pear" phpenv install 7.2.21
 
             for PHP_PATH in $HOME/.phpenv/versions/[0-9].[0-9].[0-9]*; do
               PHP_VERSION=${PHP_PATH##*/};
