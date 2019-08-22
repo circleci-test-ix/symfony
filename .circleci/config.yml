@@ -378,6 +378,8 @@ jobs:
 
             # Install php72
             #phpenv install 7.2.21
+            
+            PHP_BUILD_ZTS_ENABLE=yes PHP_BUILD_CONFIGURE_OPTS="--enable-debug" phpenv install 7.2.21
 
             #for PHP_PATH in $HOME/.phpenv/versions/[0-9].[0-9].[0-9]*; do
             #  PHP_VERSION=${PHP_PATH##*/};
@@ -387,7 +389,7 @@ jobs:
 
             phpenv rehash
           
-            phpenv install 7.2.21
+            
             
             # Enable Sury ppa
             #sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 6B05F25D762E3157
