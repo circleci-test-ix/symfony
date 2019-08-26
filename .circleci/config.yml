@@ -421,6 +421,8 @@ jobs:
             #slapd -f src/Symfony/Component/Ldap/Tests/Fixtures/conf/slapd.conf -h ldap://localhost:3389 &
             sudo cp -f src/Symfony/Component/Ldap/Tests/Fixtures/conf/slapd.conf /etc/ldap/ldap.conf
             sudo slapd -h ldap://localhost:3389 -d 65 &
+            sleep 5
+            ldapadd -h localhost:3389 -d 65 -D cn=admin,dc=symfony,dc=com -w symfony -f src/Symfony/Component/Ldap/Tests/Fixtures/data/base.ldif
             #slapd -f src/Symfony/Component/Ldap/Tests/Fixtures/conf/slapd.conf -h ldap://localhost:3389
             #[ -d ~/.composer ] || mkdir ~/.composer
             #cp .composer/* ~/.composer/
