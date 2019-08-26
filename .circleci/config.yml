@@ -420,7 +420,7 @@ jobs:
             fi
             #slapd -f src/Symfony/Component/Ldap/Tests/Fixtures/conf/slapd.conf -h ldap://localhost:3389 &
             sudo cp -f src/Symfony/Component/Ldap/Tests/Fixtures/conf/slapd.conf /etc/ldap/ldap.conf
-            slapd -h ldap://localhost:3389 -d 65 &
+            slapd -h ldap://localhost:3389 -d 65
             #slapd -f src/Symfony/Component/Ldap/Tests/Fixtures/conf/slapd.conf -h ldap://localhost:3389
             #[ -d ~/.composer ] || mkdir ~/.composer
             #cp .composer/* ~/.composer/
